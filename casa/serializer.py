@@ -30,8 +30,6 @@ class UserSerializer(serializers.ModelSerializer):
 
 # Serializer cho model Note
 class NoteSerializer(serializers.ModelSerializer):
-    owner = serializers.StringRelatedField()  # Hiển thị thông tin owner dưới dạng string (username)
-
     class Meta:
         model = Note
         fields = ['id', 'description']
