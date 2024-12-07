@@ -1,13 +1,26 @@
-from django.urls import path
-from .views import get_notes , CustomTokenObtainPairView, CustomTokenRefreshView, logout, is_authenticated, register
-from .views import RegisterView
+"""
+URL configuration for casa project.
+
+The `urlpatterns` list routes URLs to views. For more information please see:
+    https://docs.djangoproject.com/en/4.2/topics/http/urls/
+Examples:
+Function views
+    1. Add an import:  from my_app import views
+    2. Add a URL to urlpatterns:  path('', views.home, name='home')
+Class-based views
+    1. Add an import:  from other_app.views import Home
+    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
+Including another URLconf
+    1. Import the include() function: from django.urls import include, path
+    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
+"""
+from django.contrib import admin
+from django.urls import path, include, re_path
+from .views import CustomTokenRefreshView, ReactAppView
 
 urlpatterns = [
-    path('token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('token/refresh/', CustomTokenRefreshView.as_view(), name='token_refresh'),
-    path('notes/', get_notes),
-    path('logout/', logout),
-    path('authenticated/', is_authenticated),
-    path('register/', RegisterView.as_view(), name='register'),
-    #path('register/', register)
+    path('admin/', admin.site.urls),
+    path('api/auth/', include('accounts.urls')),
+    path('api/token/refresh/', CustomTokenRefreshView.as_view(), name='token_refresh'),
+    re_path(r'^.*$', ReactAppView.as_view(), name='react'),
 ]

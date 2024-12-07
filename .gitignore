@@ -1,0 +1,4 @@
+# Editor directories and files
+.venv
+*.env
+dist
