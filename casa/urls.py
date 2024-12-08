@@ -21,6 +21,7 @@ from .views import CustomTokenRefreshView, ReactAppView
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/', include('accounts.urls')),
+    path('api/auth/', include('authentication.urls')),
     path('api/token/refresh/', CustomTokenRefreshView.as_view(), name='token_refresh'),
     re_path(r'^.*$', ReactAppView.as_view(), name='react'),
 ]
