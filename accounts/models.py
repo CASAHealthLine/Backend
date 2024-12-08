@@ -16,11 +16,16 @@ class AccountManager(BaseUserManager):
         return self.create_user(username, password, **extra_fields)
 
 class Account(AbstractBaseUser, PermissionsMixin):
+    USER_TYPES = (
+        (0, 'patient'),
+        (1, 'doctor'),
+        (2, 'admin'),
+    )
     username = models.CharField(max_length=50, unique=True)
     email = models.EmailField(max_length=255, null=True, blank=True)
     google_id = models.CharField(max_length=255, null=True, blank=True)
     display_name = models.CharField(max_length=50, null=True, blank=True)
-    type = models.SmallIntegerField(default=0) # 0: patient, 1: doctor, 2: admin
+    type = models.IntegerField(choices=USER_TYPES, default=0)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 

@@ -12,7 +12,7 @@ API_SECRET_TOKEN=config('API_SECRET_TOKEN')
 async def send_phone_to_django(phone_number, chat_id):
     async with httpx.AsyncClient() as client:
         data = {
-            "phone_number": phone_number,
+            "phone": phone_number,
             "tele_id": chat_id,
         }
         headers = {

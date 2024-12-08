@@ -31,3 +31,10 @@ class RegisterSerializer(serializers.ModelSerializer):
                 'code': 'phone_invalid'
             })
         return data
+    
+class UserSerializer(serializers.ModelSerializer):
+    type_display = serializers.CharField(source='get_type_display')
+    
+    class Meta:
+        model = Account
+        fields = ('id', 'username', 'display_name', 'type', 'type_display')
