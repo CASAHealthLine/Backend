@@ -18,9 +18,16 @@ class CustomTokenRefreshView(TokenRefreshView):
 
         # Trả access token mới
         if response.status_code == 200:
-            return Response({
-                'access': response.data.get('access')
-            }, status=status.HTTP_200_OK)
+            new_refresh_token = response.data['refresh']
+            response = Response({'access': response.data['access']}, status=status.HTTP_200_OK)
+            response.set_cookie(
+                key='refresh_token',
+                value=new_refresh_token,
+                httponly=True,
+                secure=False,
+                samesite='Lax',
+            )
+            return response
         
         # Trường hợp làm mới thất bại
         return Response({'error': 'Invalid or expired refresh token'}, status=status.HTTP_401_UNAUTHORIZED)
