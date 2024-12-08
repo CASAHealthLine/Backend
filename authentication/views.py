@@ -1,4 +1,5 @@
 import requests
+from itsdangerous import URLSafeTimedSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
@@ -20,24 +21,24 @@ class VerifyOTPView(APIView):
     @method_decorator(ratelimit(key='ip', rate='5/m', method='POST', block=True))
     def post(self, request):
         otp_code = request.data.get('otp')
-        phone_number = request.data.get('phone')
+        phone_number = request.data.get('phone') or request.COOKIES.get('otp_phone')
 
         if not otp_code or not phone_number:
             return Response({'error': 'Missing phone_number or otp'}, status=status.HTTP_400_BAD_REQUEST)
         
         if not validate_vietnam_phone(phone_number):
             return Response({'error': 'Invalid phone number'}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            otp_record = OTP.objects.get(phone_number=phone_number)
-
-            if otp_record.otp == otp_code and otp_record.expires_at > now():
-                otp_record.delete()
-                return Response({'message': 'OTP verified successfully'}, status=status.HTTP_200_OK)
-            else:
-                return Response({'error': 'Invalid or expired OTP'}, status=status.HTTP_400_BAD_REQUEST)
-        except OTP.DoesNotExist:
-            return Response({'error': 'OTP record not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+        success, message = verify_otp(phone_number, otp_code)
+        
+        secret_token = generate_otp_token(API_SECRET_TOKEN, otp_code, phone_number)
+        
+        if success:
+            response = Response({'message': message}, status=status.HTTP_200_OK)
+            response.set_cookie('otp_token', secret_token, max_age=300, samesite='Lax', httponly=True)
+            return response
+        else:
+            return Response({'error': message}, status=status.HTTP_400_BAD_REQUEST)
             
 class LinkPhoneView(APIView):
     permission_classes = [AllowAny]
@@ -73,26 +74,47 @@ class RequestOTPView(APIView):
 
     @method_decorator(ratelimit(key='ip', rate='5/m', method='POST', block=True))
     def post(self, request):
-        phone_number = request.data.get("phone")
+        phone_number = request.data.get("phone") or request.COOKIES.get("otp_phone")
         if not phone_number:
             return Response({"error": "Missing phone_number"}, status=status.HTTP_400_BAD_REQUEST)
         
         if not validate_vietnam_phone(phone_number):
             return Response({"error": "Invalid phone number"}, status=status.HTTP_400_BAD_REQUEST)
         
-        contact = ContactLink.objects.filter(phone_number=phone_number).first()
-        if not contact:
-            return Response({"error": "Phone number not linked"}, status=status.HTTP_404_NOT_FOUND)
+        success, message = request_and_send_otp(phone_number)
         
-        otp_code = OTP.generate_otp(phone_number)
+        if success:
+            response = Response({"message": message}, status=status.HTTP_200_OK)
+            response.set_cookie("otp_phone", phone_number, max_age=300, samesite="Lax", httponly=True)
+            return response
+        else:
+            return Response({"error": message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+def request_and_send_otp(phone_number):
+    contact = ContactLink.objects.filter(phone_number=phone_number).first()
+    if not contact:
+        return False, "Phone number not linked"
+    
+    otp_code = OTP.generate_otp(phone_number)
 
-        if contact.tele_id:
-            try:
-                send_otp_to_telegram(contact.tele_id, otp_code)
-            except Exception as e:
-                print(f"Error sending OTP to Telegram: {e}")
+    if contact.tele_id:
+        try:
+            send_otp_to_telegram(contact.tele_id, otp_code)
+        except Exception as e:
+            print(f"Error sending OTP to Telegram: {e}")
+            return False, "Error sending OTP to Telegram"
+    return True, "OTP sent successfully"
 
-        return Response({"message": "OTP sent successfully"}, status=status.HTTP_200_OK)
+def verify_otp(phone_number, otp_code):
+    try:
+        otp_record = OTP.objects.get(phone_number=phone_number)
+        if otp_record.otp == otp_code and otp_record.expires_at > now():
+            otp_record.delete()
+            return True, "OTP verified successfully"
+        else:
+            return False, "Invalid or expired OTP"
+    except OTP.DoesNotExist:
+        return False, "OTP record not found"
     
 @retry(wait=wait_fixed(2), stop=stop_after_attempt(3))
 def send_otp_to_telegram(tele_id, otp_code):
@@ -113,3 +135,15 @@ def save_contact(phone_number, tele_id=None, email=None):
         print(f"New contact created: {phone_number}")
     else:
         print(f"Contact updated: {phone_number}")
+        
+def generate_otp_token(secret_key, code, number):
+    serializer = URLSafeTimedSerializer(secret_key)
+    return serializer.dumps({'code': code, 'number': number})
+
+def verify_otp_token(secret_key, token, code, number):
+    serializer = URLSafeTimedSerializer(secret_key)
+    try:
+        data = serializer.loads(token, max_age=300)
+        return data['code'] == code and data['number'] == number
+    except:
+        return False

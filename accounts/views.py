@@ -1,10 +1,17 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from decouple import config
+
+from accounts.models import Account
+from authentication.views import request_and_send_otp, verify_otp, verify_otp_token
+from doctors.models import Doctor
 from .serializers import RegisterSerializer, UserSerializer
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated, AllowAny
+
+API_SECRET_TOKEN=config('API_SECRET_TOKEN')
 
 class RegisterView(APIView):
     permission_classes = [AllowAny]
@@ -69,3 +76,52 @@ class LogoutView(APIView):
         response = Response({'message': 'Logout successful'}, status=status.HTTP_200_OK)
         response.delete_cookie('refresh_token')
         return response
+    
+class RequestResetPasswordView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        username = request.data.get('username')
+        user = Account.objects.filter(username=username).first()
+        if not user:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+        type = user.get_type_display()
+        if type == 'patient':
+            phone = username
+        else:
+            doctor = Doctor.objects.filter(account=user).first()
+            phone = doctor.phone
+            
+        success, message = request_and_send_otp(phone)
+        if success:
+            response = Response({'message': message}, status=status.HTTP_200_OK)
+            response.set_cookie('otp_phone', phone, max_age=300, samesite='Lax', httponly=True)
+            return response
+        else:
+            return Response({'error': message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class ResetPasswordView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        username = request.data.get('username')
+        password = request.data.get('password')
+        otp = request.data.get('otp')
+        phone = request.COOKIES.get('otp_phone')
+        otp_token = request.COOKIES.get('otp_token')
+        
+        if not phone:
+            return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        if not verify_otp_token(API_SECRET_TOKEN, otp_token, otp, phone):
+            return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        user = Account.objects.filter(username=username).first()
+        if not user:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+        user.set_password(password)
+        user.save()
+        return Response({'message': 'Password reset successfully'}, status=status.HTTP_200_OK)
+        

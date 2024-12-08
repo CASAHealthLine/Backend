@@ -19,7 +19,7 @@ class Doctor(models.Model):
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES)
     birth_date = models.DateField()
     specialty = models.ForeignKey(Specialty, on_delete=models.SET_NULL, null=True)
-    phone = models.CharField(max_length=15, unique=True)
+    phone = models.CharField(max_length=15, unique=True, blank=False, null=False)
     address = models.CharField(max_length=200, blank=True, null=True)
     employment_date = models.DateField()
     email = models.EmailField(max_length=255, unique=True, blank=True, null=True)

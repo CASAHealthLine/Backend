@@ -153,7 +153,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'accounts.Account'
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),  # Thời gian sống của access token
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=1),  # Thời gian sống của access token
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),  # Thời gian sống của refresh token
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
