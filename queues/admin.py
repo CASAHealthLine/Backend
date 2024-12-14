@@ -1,9 +1,11 @@
 from django.contrib import admin
 
-# Register your models here.
-from .models import Queue
+from queues.models import Queue
 
 @admin.register(Queue)
 class QueueAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'description', 'created_at')
-    search_fields = ('name', 'description')
+    list_display = ('id', 'patient', 'room', 'status', 'created_at')
+    search_fields = ('patient__full_name', 'room__displayname')
+    
+admin.site.unregister(Queue)
+admin.site.register(Queue, QueueAdmin)

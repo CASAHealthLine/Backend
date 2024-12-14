@@ -33,6 +33,12 @@ class Account(AbstractBaseUser, PermissionsMixin):
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = []
+    
+    def save(self, *args, **kwargs):
+        if not self.display_name:
+            self.display_name = self.username
+            
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.username

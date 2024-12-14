@@ -2,14 +2,23 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.pagination import PageNumberPagination
 
 from rooms.models import Room
 from .models import Queue
+
+class CustomPagination(PageNumberPagination):
+    page_size = 10  # Số lượng bản ghi mặc định mỗi trang
+    page_size_query_param = 'limit'  # Cho phép client tùy chỉnh giới hạn
+    max_page_size = 100  # Giới hạn tối đa cho mỗi trang
 
 class AddToQueueView(APIView):
     permission_classes = [IsAuthenticated]
     
     def post(self, request):
+        if request.user.type == 0:
+            return Response({"error": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+        
         patient_id = request.data.get('patient_id')
         room_id = request.data.get('room_id')
 
@@ -67,15 +76,15 @@ class GetQueueView(APIView):
         
         # Tìm phòng dựa trên IP
         room = Room.objects.filter(ip_address=client_ip).first()
-        base_queryset = Queue.objects.all().order_by('created_at')
+        base_queryset = Queue.objects.all().order_by('status', 'created_at')
         
         if not room or user.type == 0:
             queues = base_queryset.filter(patient_id=user.id)
         elif user.type == 1:
             if room and room.type.type_name == 'reception':
-                queues = base_queryset.filter(status='waiting')
+                queues = base_queryset
             elif room:
-                queues = base_queryset.filter(room_id=room.id, status='waiting')
+                queues = base_queryset.filter(room_id=room.id)
             else:
                 queues = Queue.objects.none()
         else:
@@ -84,6 +93,9 @@ class GetQueueView(APIView):
         queues = queues.select_related('patient', 'room').only(
             'id', 'patient__id', 'patient__full_name', 'room__id', 'room__displayname', 'status', 'created_at'
         )
+        
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queues, request)
         
         data = [
             {
@@ -94,6 +106,6 @@ class GetQueueView(APIView):
                 "room_name": queue.room.displayname,
                 "status": queue.status,
                 "created_at": queue.created_at
-            } for queue in queues
+            } for queue in result_page
         ]
-        return Response(data, status=status.HTTP_200_OK)
+        return paginator.get_paginated_response(data)

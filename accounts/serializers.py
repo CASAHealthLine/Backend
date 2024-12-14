@@ -37,4 +37,4 @@ class UserSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Account
-        fields = ('id', 'username', 'display_name', 'type', 'type_display')
+        fields = ('id', 'display_name', 'type_display')

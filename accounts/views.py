@@ -4,7 +4,8 @@ from rest_framework import status
 from decouple import config
 
 from accounts.models import Account
-from authentication.views import request_and_send_otp, verify_otp, verify_otp_token
+from rooms.models import Room
+from authentication.views import request_and_send_otp, verify_otp_token
 from doctors.models import Doctor
 from .serializers import RegisterSerializer, UserSerializer
 from django.contrib.auth import authenticate
@@ -12,6 +13,13 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
 API_SECRET_TOKEN=config('API_SECRET_TOKEN')
+
+class UserRoleView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        return Response({'role': user.get_type_display()}, status=status.HTTP_200_OK)
 
 class RegisterView(APIView):
     permission_classes = [AllowAny]
@@ -35,11 +43,11 @@ class LoginView(APIView):
         if user:
             refresh = RefreshToken.for_user(user)
             access_token = str(refresh.access_token)
-            user_data = UserSerializer(user).data
+            user = Account.objects.get(username=username)
             
             response = Response({
                 'access': access_token,
-                'user': user_data,
+                'user': UserSerializer(user).data
             }, status=status.HTTP_200_OK)
             response.set_cookie(
                 key='refresh_token',
@@ -52,11 +60,13 @@ class LoginView(APIView):
         return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
     
 
-class ProtectedView(APIView):
+class AccountView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        return Response({'message': 'You are authenticated'}, status=status.HTTP_200_OK)
+        user = request.user
+        serializer = UserSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]

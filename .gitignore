@@ -4,3 +4,4 @@
 dist
 staticfiles
 */migrations
+__pycache__/
