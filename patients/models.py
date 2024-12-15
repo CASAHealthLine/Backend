@@ -17,7 +17,7 @@ class Patient(models.Model):
     bhyt = models.CharField(max_length=20, blank=True, null=True)
     cccd = models.CharField(max_length=15)
     job = models.CharField(max_length=50, blank=True, null=True)
-    phone = models.CharField(max_length=12, unique=True)
+    phone = models.CharField(max_length=12, blank=True, null=True, unique=True)
     email = models.EmailField(max_length=255, unique=True, blank=True, null=True)
     account = models.ForeignKey(Account, on_delete=models.SET_NULL, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)

@@ -3,7 +3,10 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter
 
+from queues.filters import QueueFilter
 from rooms.models import Room
 from .models import Queue
 
@@ -89,13 +92,20 @@ class GetQueueView(APIView):
                 queues = Queue.objects.none()
         else:
             queues = base_queryset
+        
+        filterset = QueueFilter(request.query_params, queryset=queues)
+        if filterset.is_valid():
+            filtered_queues = filterset.qs
+        else:
+            filtered_queues = base_queryset.none()
             
-        queues = queues.select_related('patient', 'room').only(
-            'id', 'patient__id', 'patient__full_name', 'room__id', 'room__displayname', 'status', 'created_at'
+            
+        filtered_queues = filtered_queues.select_related('patient', 'room').only(
+            'id', 'patient__id', 'patient__full_name', 'room__id', 'room__displayname', 'status', 'created_at', 'patient__cccd', 'patient__gender', 'patient__birth_date'
         )
         
         paginator = CustomPagination()
-        result_page = paginator.paginate_queryset(queues, request)
+        result_page = paginator.paginate_queryset(filtered_queues, request)
         
         data = [
             {
@@ -105,7 +115,28 @@ class GetQueueView(APIView):
                 "room_id": queue.room.id,
                 "room_name": queue.room.displayname,
                 "status": queue.status,
-                "created_at": queue.created_at
+                "created_at": queue.created_at,
+                "cccd": queue.patient.cccd,
+                "gender": queue.patient.gender,
+                "birth_date": queue.patient.birth_date
             } for queue in result_page
         ]
         return paginator.get_paginated_response(data)
+    
+class GetFilterFields(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        fields = ['status', 'room_id']
+        response = []
+        for field in fields:
+            field_options = Queue.objects.values(field).distinct()
+            options = [
+                {"label": option[field], "value": option[field]} for option in field_options
+            ]
+            response.append({
+                "field": field,
+                "label": field.capitalize(),
+                "options": options
+            })
+        return Response(response, status=status.HTTP_200_OK)
