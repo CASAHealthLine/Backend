@@ -33,6 +33,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'jet',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -85,7 +86,7 @@ ROOT_URLCONF = 'casa.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -186,4 +187,13 @@ CORS_ALLOWED_ORIGINS = [
 from corsheaders.defaults import default_headers
 CORS_ALLOW_HEADERS = list(default_headers) + [
     'X-Client-IP',
+]
+
+JET_DEFAULT_THEME = 'green'  # Dùng theme sáng màu
+
+JET_THEMES = [
+    {'theme': 'default', 'color': '#47bac1', 'title': 'Default'},
+    {'theme': 'green', 'color': '#24c38c', 'title': 'Green'},
+    {'theme': 'light-violet', 'color': '#a464c4', 'title': 'Light Violet'},
+    {'theme': 'dark-blue', 'color': '#003366', 'title': 'Dark Blue'},
 ]
