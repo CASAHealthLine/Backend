@@ -33,8 +33,8 @@ class RegisterSerializer(serializers.ModelSerializer):
         return data
     
 class UserSerializer(serializers.ModelSerializer):
-    type_display = serializers.CharField(source='get_type_display')
+    role = serializers.CharField(source='get_type_display')
     
     class Meta:
         model = Account
-        fields = ('id', 'display_name', 'type_display')
+        fields = ('id', 'display_name', 'role')

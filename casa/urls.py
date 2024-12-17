@@ -23,6 +23,8 @@ urlpatterns = [
     path('api/auth/', include('accounts.urls')),
     path('api/auth/', include('authentication.urls')),
     path('api/queue/', include('queues.urls')),
+    path('api/room/', include('rooms.urls')),
+    path('api/patient/', include('patients.urls')),
     path('api/token/refresh/', CustomTokenRefreshView.as_view(), name='token_refresh'),
     re_path(r'^.*$', ReactAppView.as_view(), name='react'),
 ]
