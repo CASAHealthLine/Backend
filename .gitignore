@@ -5,3 +5,30 @@ dist
 staticfiles
 */migrations
 __pycache__/
+# Ignore the virtual environment
+venv/
+
+# Ignore system files
+__pycache__/
+*.pyc
+
+# Ignore database files (if using SQLite)
+db.sqlite3
+
+# Ignore environment variables
+.env
+
+# Ignore compiled files
+*.py[co]
+*.log
+
+# Ignore Django static and media folders (optional)
+static/
+media/
+
+# Ignore IDE and editor files
+.vscode/
+.idea/
+
+# Ignore node_modules if using frontend dependencies
+node_modules/
