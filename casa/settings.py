@@ -33,7 +33,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'jet',
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -189,11 +189,13 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
     'X-Client-IP',
 ]
 
-JET_DEFAULT_THEME = 'green'  # Dùng theme sáng màu
+JAZZMIN_SETTINGS = {
+    "site_title": "Admin Site",  # Tiêu đề trang admin
+    "site_header": "Hospital Management",  # Tiêu đề phần header
+    "site_brand": "CASA",  # Logo thương hiệu
+    "welcome_sign": "Chào mừng đến với hệ thống quản lý CASA HealthLine",
+    "copyright": "Hospital Management 2024",
+    "search_model": ["auth.User", "app.ModelName"],  # Tìm kiếm trong các model cụ thể
+    "show_sidebar": True,  # Hiển thị sidebar
+}
 
-JET_THEMES = [
-    {'theme': 'default', 'color': '#47bac1', 'title': 'Default'},
-    {'theme': 'green', 'color': '#24c38c', 'title': 'Green'},
-    {'theme': 'light-violet', 'color': '#a464c4', 'title': 'Light Violet'},
-    {'theme': 'dark-blue', 'color': '#003366', 'title': 'Dark Blue'},
-]
