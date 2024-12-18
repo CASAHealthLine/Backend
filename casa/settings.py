@@ -33,6 +33,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -85,7 +86,7 @@ ROOT_URLCONF = 'casa.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -187,3 +188,30 @@ from corsheaders.defaults import default_headers
 CORS_ALLOW_HEADERS = list(default_headers) + [
     'X-Client-IP',
 ]
+
+JAZZMIN_SETTINGS = {
+    "site_title": "Admin Site",  # Tiêu đề trang admin
+    "site_header": "Hospital Queue Management",  # Tiêu đề phần header
+    "site_brand": "CASA",  # Logo thương hiệu
+    "welcome_sign": "Chào mừng đến với hệ thống quản lý CASA HealthLine",
+    "copyright": "CASA Hospital Queue Management 2024",
+    "search_model": ["auth.User", "accounts.Account", "patients.Patient","doctors.Doctor",
+                     "doctors.Specialty","queues.Queue","rooms.RoomType","rooms.Room"],  # Tìm kiếm trong các model cụ thể
+    "show_sidebar": True,  # Hiển thị sidebar
+    "icons": {
+        "auth": "fas fa-users-cog",  # Icon cho phần Authentication and Authorization
+        "auth.group": "fas fa-users",  # Icon cho nhóm Groups
+        "accounts.Account": "fas fa-user",  # Icon cho app Accounts
+        "doctors.Doctor": "fas fa-user-md",  # Icon cho app Doctors
+        "doctors.Specialty": "fas fa-stethoscope",  # Icon cho Specialtys
+        "patients.Patient": "fas fa-user-injured",  # Icon cho Patients
+        "queues.Queue": "fas fa-list-ol",  # Icon cho Queues
+        "rooms.RoomType": "fas fa-door-open",  # Icon cho Room types
+        "rooms.Room": "fas fa-bed",  # Icon cho Rooms
+        "token_blacklist": "fas fa-key",  # Icon cho phần token blacklist
+"token_blacklist.OutstandingToken": "fas fa-key",  # Model OutstandingToken
+"token_blacklist.BlacklistedToken": "fas fa-ban",  # Model BlacklistedToken
+
+    },
+}
+
