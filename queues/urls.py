@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import AddToQueueView, GetQueueView, GetSpecificQueueView, UpdateQueueStatusView, GetFilterFields
+from .views import AddToQueueView, GetQueueView, GetSpecificQueueView, UpdateQueueStatusView, GetFilterFields, GetMyQueueView, GetMyCurrentQueueView
 
 urlpatterns = [
     path('add/', AddToQueueView.as_view(), name='add_to_queue'),
@@ -7,4 +7,6 @@ urlpatterns = [
     path('<int:room_id>/', GetSpecificQueueView.as_view(), name='get_queue'),
     path('', GetQueueView.as_view(), name='get_all_queues'),
     path('filter/', GetFilterFields.as_view(), name='get_filter_fields'),
+    path('my/', GetMyQueueView.as_view(), name='get_my_queue'),
+    path('my/current/', GetMyCurrentQueueView.as_view(), name='get_current_queue'),
 ]

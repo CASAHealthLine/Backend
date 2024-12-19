@@ -152,3 +152,34 @@ class GetFilterFields(APIView):
                 "options": options
             })
         return Response(response, status=status.HTTP_200_OK)
+    
+class GetMyQueueView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        pass
+    
+class GetMyCurrentQueueView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        user = request.user
+
+        my_queues = Queue.objects.filter(patient__account=user, status__in=[0, 1]).order_by('created_at')
+        if not my_queues:
+            return Response({"message": "No queue found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        data = []
+        for my_queue in my_queues:
+            room = my_queue.room
+            current_queue = Queue.objects.filter(room=room, status=0).first()
+            next_queue = Queue.objects.filter(room=room, status=1).first()
+            
+            data.append({
+                "room_id": room.id,
+                "room_name": room.displayname,
+                "current_number": current_queue.order if current_queue else None,
+                "next_number": next_queue.order if next_queue else None,
+                "my_number": my_queue.order
+            })
+        return Response(data, status=status.HTTP_200_OK)

@@ -10,7 +10,6 @@ def get_user_from_token(token_key):
     try:
         access_token = AccessToken(token_key)
         user_id = access_token.payload.get("user_id")
-        
         if user_id:
             return Account.objects.get(id=user_id)
     except Exception:

@@ -6,6 +6,8 @@ from asgiref.sync import sync_to_async
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
+from accounts.models import Account
+from patients.models import Patient
 from queues.filters import QueueFilter
 from queues.models import Queue
 
@@ -15,7 +17,7 @@ class QueueConsumer(AsyncWebsocketConsumer):
         from rooms.models import Room
         from .models import Queue
         
-        self.group_name = None
+        self.group_name = "general"
         self.filters = {}
         self.user = self.scope['user']
         print(f"User: {self.user}")
@@ -33,10 +35,27 @@ class QueueConsumer(AsyncWebsocketConsumer):
                 return
             
             if self.user.is_patient:
-                room = await sync_to_async(
-                    lambda: Queue.objects.filter(patient__account=self.user).first().room
+                account = await sync_to_async(
+                    lambda: Account.objects.get(id=self.user.id)
                 )()
-                self.group_name = f'room_patient_{room.id}'
+                patient = await sync_to_async(
+                    lambda: Patient.objects.get(account=account)
+                )()
+                if not patient:
+                    await self.close()
+                self.group_name = f'patient_{patient.id}'
+                
+                queue = await sync_to_async(
+                    lambda: Queue.objects.filter(patient=patient).first()
+                )()
+                if queue:
+                    room = await sync_to_async(
+                        lambda: queue.room
+                    )()
+                    await self.channel_layer.group_add(
+                        f'room_patient_{room.id}',
+                        self.channel_name
+                    )
             elif self.user.is_doctor:
                 room = await sync_to_async(
                     lambda: Room.objects.filter(ip_address=ip_address).first()
