@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 
 from queues.models import Queue
 from queues.utils import add_to_queue
@@ -42,11 +43,17 @@ class UpdatePatientView(APIView):
         }, status=status.HTTP_200_OK if patient else status.HTTP_201_CREATED)
 
 class AddTreatmentView(APIView):
+    permission_classes = [IsAuthenticated]
+    
     def post(self, request):
+        user = request.user
+        if not user.is_doctor:
+            return Response({"error": "Bạn không có quyền thực hiện hành động này"}, status=status.HTTP_403_FORBIDDEN)
+        
         patient_data = request.data.get('patient')
 
         if not patient_data or not patient_data.get('cccd'):
-            return Response({"error": "Missing cccd or treatment"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Thiếu thông tin bệnh nhân (CCCD)"}, status=status.HTTP_400_BAD_REQUEST)
 
         patient, result = get_or_create_patient(patient_data['cccd'], patient_data)
         
@@ -54,7 +61,7 @@ class AddTreatmentView(APIView):
             return Response(result, status=status.HTTP_400_BAD_REQUEST)
         
         if Queue.objects.filter(patient=patient, date=now().date(), status=1 or 0).exists():
-            return Response({"error": "Patient is already in the queue"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Bệnh nhân đã ở trong hàng đợi"}, status=status.HTTP_400_BAD_REQUEST)
         
         treatment_data = request.data.get('treatment')
         treatment_data['patient'] = patient.id

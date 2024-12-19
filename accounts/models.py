@@ -34,6 +34,14 @@ class Account(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = []
     
+    @property
+    def is_doctor(self):
+        return self.type == 1
+    
+    @property
+    def is_patient(self):
+        return self.type == 0
+    
     def save(self, *args, **kwargs):
         if not self.display_name:
             self.display_name = self.username
