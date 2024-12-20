@@ -60,7 +60,7 @@ class AddTreatmentView(APIView):
         if isinstance(result, dict):
             return Response(result, status=status.HTTP_400_BAD_REQUEST)
         
-        if Queue.objects.filter(patient=patient, date=now().date(), status=1 or 0).exists():
+        if Queue.objects.filter(patient=patient, created_at__date=now().date(), status__in=[0, 1]).exists():
             return Response({"error": "Bệnh nhân đã ở trong hàng đợi"}, status=status.HTTP_400_BAD_REQUEST)
         
         treatment_data = request.data.get('treatment')
